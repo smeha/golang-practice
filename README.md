@@ -10,6 +10,9 @@ go run .
 ```
 - Chose from the list of available exercises
 
-## Lint tests
+## Run lint tests
 
-## Run test cases
+## Run test cases with race detector
+```bash
+go test -v -race
+```
