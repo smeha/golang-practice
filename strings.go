@@ -4,13 +4,14 @@ func IsSubsequence(word string, arr []string) bool {
 	if len(word) == 0 {
 		return true
 	}
+	runes := []rune(word)
 	j := 0
-	for i := 0; i < len(arr) && j < len(word); i++ {
-		if string(word[j]) == arr[i] {
+	for i := 0; i < len(arr) && j < len(runes); i++ {
+		if string(runes[j]) == arr[i] {
 			j++
 		}
 	}
-	return j == len(word)
+	return j == len(runes)
 }
 
 func LongestSubstringWithoutRepeating(str string) int {

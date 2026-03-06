@@ -108,6 +108,7 @@ func main() {
 	case "limiter":
 		fmt.Println("  Creating limiter: 5 rps, burst 3. Acquiring 6 tokens...")
 		l := NewLimiter(5, 3)
+		defer l.Stop()
 		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		for i := 1; i <= 6; i++ {

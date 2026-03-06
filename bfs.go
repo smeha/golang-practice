@@ -2,10 +2,6 @@ package main
 
 import "sync"
 
-type bfsJob struct {
-	start int
-}
-
 type bfsResult struct {
 	start int
 	order []int
@@ -17,7 +13,7 @@ func ConcurrentBFSQueries(graph map[int][]int, queries []int, numWorkers int) ma
 		numWorkers = 1
 	}
 
-	jobs := make(chan bfsJob)
+	jobs := make(chan int)
 	results := make(chan bfsResult)
 
 	var wg sync.WaitGroup
@@ -26,9 +22,9 @@ func ConcurrentBFSQueries(graph map[int][]int, queries []int, numWorkers int) ma
 	for i := 0; i < numWorkers; i++ {
 		go func() {
 			defer wg.Done()
-			for job := range jobs {
-				order := bfs(graph, job.start)
-				results <- bfsResult{start: job.start, order: order}
+			for start := range jobs {
+				order := bfs(graph, start)
+				results <- bfsResult{start: start, order: order}
 			}
 		}()
 	}
@@ -40,7 +36,7 @@ func ConcurrentBFSQueries(graph map[int][]int, queries []int, numWorkers int) ma
 
 	go func() {
 		for _, q := range queries {
-			jobs <- bfsJob{start: q}
+			jobs <- q
 		}
 		close(jobs)
 	}()

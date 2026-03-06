@@ -4,6 +4,7 @@ import (
 	"context"
 	"io"
 	"net/http"
+	"sync"
 )
 
 type FetchResult struct {
@@ -20,46 +21,31 @@ func FetchAll(ctx context.Context, client *http.Client, urls []string, maxConcur
 
 	results := make([]FetchResult, len(urls))
 	sem := make(chan struct{}, maxConcurrent)
-	done := make(chan struct{})
-
-	type item struct {
-		i int
-		r FetchResult
-	}
-	out := make(chan item)
-
-	go func() {
-		defer close(done)
-		for it := range out {
-			results[it.i] = it.r
-		}
-	}()
+	var wg sync.WaitGroup
 
 	for i, u := range urls {
 		i, u := i, u
 		sem <- struct{}{}
+		wg.Add(1)
 		go func() {
-			defer func() { <-sem }()
+			defer func() {
+				<-sem
+				wg.Done()
+			}()
 
 			r := FetchResult{URL: u}
 
 			req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
 			if err != nil {
 				r.Err = err
-				select {
-				case out <- item{i: i, r: r}:
-				case <-ctx.Done():
-				}
+				results[i] = r
 				return
 			}
 
 			resp, err := client.Do(req)
 			if err != nil {
 				r.Err = err
-				select {
-				case out <- item{i: i, r: r}:
-				case <-ctx.Done():
-				}
+				results[i] = r
 				return
 			}
 			defer resp.Body.Close()
@@ -71,18 +57,10 @@ func FetchAll(ctx context.Context, client *http.Client, urls []string, maxConcur
 			} else {
 				r.Body = body
 			}
-
-			select {
-			case out <- item{i: i, r: r}:
-			case <-ctx.Done():
-			}
+			results[i] = r
 		}()
 	}
 
-	for i := 0; i < cap(sem); i++ {
-		sem <- struct{}{}
-	}
-	close(out)
-	<-done
+	wg.Wait()
 	return results
 }

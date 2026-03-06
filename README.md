@@ -6,8 +6,9 @@ The project is to practice Go language
 
 ## How to run locally
 ```bash
-
+go run .
 ```
+- Chose from the list of available exercises
 
 ## Lint tests
 

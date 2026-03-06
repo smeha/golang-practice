@@ -7,6 +7,8 @@ import (
 
 type Limiter struct {
 	tokens chan struct{}
+	stop   chan struct{}
+	ticker *time.Ticker
 }
 
 func NewLimiter(rps int, burst int) *Limiter {
@@ -17,21 +19,27 @@ func NewLimiter(rps int, burst int) *Limiter {
 		burst = 1
 	}
 
-	l := &Limiter{tokens: make(chan struct{}, burst)}
+	l := &Limiter{
+		tokens: make(chan struct{}, burst),
+		stop:   make(chan struct{}),
+		ticker: time.NewTicker(time.Second / time.Duration(rps)),
+	}
 	for i := 0; i < burst; i++ {
 		l.tokens <- struct{}{}
 	}
 
-	interval := time.Second / time.Duration(rps)
-	t := time.NewTicker(interval)
-
 	go func() {
-		defer t.Stop()
-		for range t.C {
+		defer l.ticker.Stop()
+		for {
 			select {
-			case l.tokens <- struct{}{}:
-			default:
-				// bucket full
+			case <-l.stop:
+				return
+			case <-l.ticker.C:
+				select {
+				case l.tokens <- struct{}{}:
+				default:
+					// bucket full
+				}
 			}
 		}
 	}()
@@ -46,4 +54,8 @@ func (l *Limiter) Acquire(ctx context.Context) error {
 	case <-l.tokens:
 		return nil
 	}
+}
+
+func (l *Limiter) Stop() {
+	close(l.stop)
 }
