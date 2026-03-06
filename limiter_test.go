@@ -27,7 +27,7 @@ func TestLimiterContextCancellation(t *testing.T) {
 	defer l.Stop()
 
 	ctx := context.Background()
-	l.Acquire(ctx) // drain burst
+	_ = l.Acquire(ctx) // drain burst
 
 	ctx, cancel := context.WithTimeout(ctx, 50*time.Millisecond)
 	defer cancel()
@@ -42,10 +42,10 @@ func TestLimiterRateLimit(t *testing.T) {
 	defer l.Stop()
 
 	ctx := context.Background()
-	l.Acquire(ctx) // drain burst
+	_ = l.Acquire(ctx) // drain burst
 
 	start := time.Now()
-	l.Acquire(ctx) // must wait ~100ms for next token
+	_ = l.Acquire(ctx) // must wait ~100ms for next token
 	elapsed := time.Since(start)
 
 	if elapsed < 50*time.Millisecond {

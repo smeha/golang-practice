@@ -14,7 +14,7 @@ func TestFetchAll(t *testing.T) {
 		switch r.URL.Path {
 		case "/ok":
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("hello"))
+			_, _ = w.Write([]byte("hello"))
 		case "/notfound":
 			w.WriteHeader(http.StatusNotFound)
 		case "/slow":
@@ -61,7 +61,7 @@ func TestFetchAllPreservesOrder(t *testing.T) {
 			time.Sleep(30 * time.Millisecond)
 		}
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(r.URL.Path))
+		_, _ = w.Write([]byte(r.URL.Path))
 	}))
 	defer srv.Close()
 
