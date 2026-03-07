@@ -1,4 +1,4 @@
-# About Go language practice project
+# Go language practice project
 The project is to practice Go language
 
 ## Tech Stack
